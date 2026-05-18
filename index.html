@@ -2,23 +2,20 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 微信专属极速渲染优化标签 -->
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>野原新之助来电</title>
-    <!-- 仅预加载首屏核心头像，不抢占带宽 -->
     <link rel="preload" as="image" href="./xiaoxin-avatar.jpg" fetchpriority="high">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-        body{color:#fff;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
+        body{color:#fff;font-family:system-ui;background: linear-gradient(180deg, #0F172A, #1E293B, #2E1065);overflow:hidden}
         .page{width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute;top:0;left:0;padding:20px}
         .hide{display:none!important}
 
-        /* 来电页专属背景 微信极致适配 */
-        #p1{background:url('./call-bg.jpg') center/cover no-repeat fixed;background-size:100% 100%;}
+        /* 🔥 来电页面：纯色背景（原版设计） */
+        #p1{background: linear-gradient(180deg, #0F172A, #1E293B, #2E1065);}
+
+        /* 🔥 通话页面：接通后显示背景图 call-bg */
+        #p2{background:url('./call-bg.jpg') center/cover no-repeat;}
 
         .avatar-box{position:relative;width:190px;height:190px;margin-bottom:35px;z-index:1}
         .avatar{width:100%;height:100%;border-radius:50%;background:#FFD100 url('./xiaoxin-avatar.jpg')center/cover no-repeat;box-shadow:0 0 25px #FFD10066}
@@ -26,8 +23,8 @@
         .wave:nth-child(3){animation-delay:.7s}
         @keyframes w{0%{transform:scale(1);opacity:1}100%{transform:scale(1.4);opacity:0}}
 
-        .call-title{font-size:28px;color:#FFD100;margin-bottom:8px;text-shadow:0 2px 6px #000}
-        .call-sub{font-size:15px;color:#fff;text-shadow:0 2px 4px #000}
+        .call-title{font-size:28px;color:#FFD100;margin-bottom:8px;}
+        .call-sub{font-size:15px;color:#ccc;}
         .btn-group{display:flex;gap:45px;margin-top:40px}
         .btn{width:75px;height:75px;border-radius:50%;border:none;color:#fff;font-size:15px;font-weight:500}
         .btn-accept{background:linear-gradient(135deg,#10B981,#059669)}
@@ -37,7 +34,6 @@
         .talk-time{font-size:22px;color:#FFD100;margin:10px 0}
         .talk-text{font-size:18px;max-width:300px;line-height:1.5}
 
-        /* 蛋糕图样式 轻量化 */
         .cake-pic{width:220px;height:auto;margin:0 auto 25px;border-radius:12px;overflow:hidden}
         .cake-pic img{width:100%;height:auto;display:block}
         .flame{width:18px;height:28px;background:linear-gradient(180deg,#FFEF00,#FF9A00);border-radius:50% 50% 10% 10%;position:relative;top:-15px;margin:0 auto;animation:f .7s infinite alternate}
@@ -45,7 +41,15 @@
         .flame.out{opacity:0;height:0}
         .progress{width:140px;height:5px;background:#333;border-radius:2px;margin:12px auto}
         .progress-bar{height:100%;width:0%;background:#FFD100;transition:width .1s linear}
-        .btn-blow{width:95px;height:95px;border-radius:50%;background:linear-gradient(135deg,#FFD100,#FFB400);border:none;font-size:17px;font-weight:500;color:#222}
+        .btn-blow{width:95px;height:95px;border-radius:50%;background:linear-gradient(135deg,#FFD100,#FFB400);border:none;font-size:17px;font-weight:500;color:#222;
+            /* 🔥 禁用系统默认长按行为，防止冲突 */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
 
         .fireworks-page{background:#000}
         .meteor{position:absolute;width:140px;height:2px;background:linear-gradient(90deg,transparent,#FFD100,#fff);transform:rotate(-45deg);left:-140px;opacity:0}
@@ -58,6 +62,7 @@
     </style>
 </head>
 <body>
+    <!-- 来电页：纯色背景 -->
     <div class="page" id="p1">
         <div class="avatar-box"><div class="avatar"></div><div class="wave"></div><div class="wave"></div></div>
         <div class="call-title">野原新之助</div>
@@ -67,6 +72,7 @@
             <button class="btn btn-accept" id="accept">接听</button>
         </div>
     </div>
+    <!-- 通话页：接通后显示call-bg背景图 -->
     <div class="page hide" id="p2">
         <div class="talk-avatar"></div>
         <div class="talk-time" id="ttime">00:00</div>
@@ -74,146 +80,180 @@
     </div>
     <div class="page hide" id="p3">
         <div class="cake-pic">
-            <!-- 懒加载蛋糕图 首屏不加载 切换页面自动加载 -->
-            <img data-src="./cake-img.jpg" alt="生日蛋糕" loading="lazy">
+            <img src="./cake-img.jpg" alt="生日蛋糕">
         </div>
         <div class="flame" id="fire"></div>
         <div style="text-align:center">
             <div style="color:#FFD100;font-size:20px;margin-bottom:8px">长按3秒吹灭蜡烛</div>
             <div class="progress"><div class="progress-bar" id="bar"></div></div>
-            <button class="btn btn-blow" onmousedown="startBlow()" onmouseup="stopBlow()" ontouchstart="startBlow()" ontouchend="stopBlow()">长按吹灭</button>
+            <button class="btn-blow" id="blowBtn">长按吹灭</button>
         </div>
     </div>
     <div class="page fireworks-page hide" id="p4"><div class="meteor" id="meteor"></div></div>
     <div class="page card-page hide" id="p6"><div class="blessing-text" id="finalBless"></div></div>
 
 <script>
-// 自定义祝福语 直接修改这里
-const USER_BLESS ="愿你做自由的自己，年年有今日，岁岁有今朝！";
-let ringAudio=null,bgmAudio=null;
-let blowTimer,blowProgress=0,BLOW_TIME=3000;
-let callTimer,sec=0;
+const USER_BLESS = "愿你做自由的自己，年年有今日，岁岁有今朝！";
+let ringAudio = null;
+let blowTimer, blowProgress = 0, BLOW_TIME = 3000; // 3秒吹灭
+let callTimer, sec = 0;
+let isBlowing = false;
 
-// 懒加载图片函数 微信专属
-function lazyLoadImg(){
-    document.querySelectorAll('img[data-src]').forEach(item=>{
-        item.src = item.dataset.src;
-        item.removeAttribute('data-src');
-    })
+// 🔥 修复所有浏览器音频播放（核心：必须用户点击触发）
+function playAudio(file, callback) {
+    try {
+        // 停止所有声音
+        document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
+        if (ringAudio) { ringAudio.pause(); ringAudio.currentTime = 0; }
+        
+        const audio = new Audio(`./${file}.mp3`);
+        audio.play().then(() => {
+            audio.onended = callback;
+        }).catch(err => {
+            console.log("音频播放兼容处理", err);
+            callback?.();
+        });
+        return audio;
+    } catch (e) {
+        callback?.();
+        return null;
+    }
 }
 
-// 统一音频播放 严格适配微信自动播放限制
-function playAudio(file,cb){
-    document.querySelectorAll('audio').forEach(a=>{a.pause();a.currentTime=0});
-    if(ringAudio){ringAudio.pause();ringAudio.currentTime=0}
-    let a=new Audio(`./${file}.mp3`);
-    a.play().catch(()=>{});
-    a.onended=cb;
-    return a;
+// 播放来电铃声
+function playRing() {
+    ringAudio = new Audio('./ring.mp3');
+    ringAudio.loop = true;
+    ringAudio.volume = 0.5;
 }
 
-// 来电铃声
-function playRing(){
-    ringAudio=new Audio('./ring.mp3');
-    ringAudio.loop=true;
-    ringAudio.volume=0.5;
-    ringAudio.play().catch(()=>{});
-}
-
-// 结尾背景音乐 低音量不刺耳
-function playBGM(){
-    bgmAudio=new Audio('./bgm.mp3');
-    bgmAudio.loop=true;
-    bgmAudio.volume=0.35;
-    bgmAudio.play().catch(()=>{});
+// 播放结尾BGM
+function playBGM() {
+    const bgm = new Audio('./bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.35;
+    bgm.play().catch(() => {});
 }
 
 // 通话计时
-function startCallTimer(){
-    sec=0;
-    callTimer=setInterval(()=>{
+function startCallTimer() {
+    sec = 0;
+    callTimer = setInterval(() => {
         sec++;
-        let m=String(Math.floor(sec/60)).padStart(2,'0');
-        let s=String(sec%60).padStart(2,'0');
-        document.getElementById('ttime').innerText=`${m}:${s}`;
-    },1000);
+        let m = String(Math.floor(sec/60)).padStart(2,'0');
+        let s = String(sec%60).padStart(2,'0');
+        document.getElementById('ttime').innerText = `${m}:${s}`;
+    }, 1000);
 }
 
-// 页面切换 触发懒加载
-function show(id){
-    document.querySelectorAll('.page').forEach(p=>p.classList.add('hide'));
+// 页面切换
+function show(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hide'));
     document.getElementById(id).classList.remove('hide');
-    // 切换到吹蜡烛页加载蛋糕图
-    if(id==='p3') lazyLoadImg();
-    // 切换到祝福页加载背景图
-    if(id==='p6') document.getElementById('p6').classList.add('card-bg-loaded');
+    if(id === 'p6') document.getElementById('p6').classList.add('card-bg-loaded');
 }
 
-// 烟花动画
-function createFireworks(){
+// 烟花
+function createFireworks() {
     document.getElementById('meteor').classList.add('fly');
 }
 
-// 页面加载完成 仅启动铃声 不预载多余资源
-window.addEventListener('load',()=>{
-    // 空闲时间后台静默预载常用音频 不卡顿首屏
-    setTimeout(()=>{new Audio('./01-open.mp3')},1500);
-    playRing();
-});
-
-// 接听逻辑
-document.getElementById('accept').onclick=()=>{
-    show('p2');
-    startCallTimer();
-    playAudio('01-open',()=>{
-        setTimeout(()=>playAudio('02-cake',()=>{
-            setTimeout(()=>playAudio('03-blessing',()=>{
-                setTimeout(()=>{show('p3');playAudio('04-candle')},800);
-            }));
-        }),800);
-    });
-};
-
-// 拒绝提示
-document.getElementById('refuse').onclick=()=>{alert("不接小新会伤心哦！")};
-
-// 长按3秒吹蜡烛
-function startBlow(){
-    if(blowTimer)return;
-    blowProgress=0;
-    document.getElementById('bar').style.width='0%';
-    blowTimer=setInterval(()=>{
-        blowProgress+=100;
-        let per=Math.min(100,(blowProgress/BLOW_TIME)*100);
-        document.getElementById('bar').style.width=per+'%';
-        if(blowProgress>=BLOW_TIME){
-            clearInterval(blowTimer);
-            document.getElementById('fire').classList.add('out');
-            show('p4');
-            createFireworks();
-            playAudio('05-success',()=>{
-                setTimeout(()=>playAudio('06-gift',()=>{
-                    setTimeout(()=>playAudio('07-end',()=>{
-                        setTimeout(()=>{
-                            clearInterval(callTimer);
-                            show('p6');
-                            document.getElementById('finalBless').innerText=USER_BLESS;
-                            playBGM();
-                        },1200);
-                    }));
-                }),800);
-            });
+// 🔥 长按吹蜡烛核心逻辑（完全修复）
+function startBlow() {
+    if (isBlowing) return;
+    isBlowing = true;
+    blowProgress = 0;
+    document.getElementById('bar').style.width = '0%';
+    
+    // 🔥 定时器每100ms更新一次进度
+    blowTimer = setInterval(() => {
+        blowProgress += 100;
+        let percentage = Math.min(100, (blowProgress / BLOW_TIME)*100);
+        document.getElementById('bar').style.width = percentage + '%';
+        
+        // 长按3秒完成
+        if (blowProgress >= BLOW_TIME) {
+            completeBlow();
         }
-    },100);
+    }, 100);
 }
 
-// 松手重置进度
-function stopBlow(){
-    if(blowProgress<BLOW_TIME){
+function stopBlow() {
+    if (isBlowing && blowProgress < BLOW_TIME) {
         clearInterval(blowTimer);
-        document.getElementById('bar').style.width='0%';
+        document.getElementById('bar').style.width = '0%';
+        isBlowing = false;
     }
 }
+
+function completeBlow() {
+    clearInterval(blowTimer);
+    isBlowing = false;
+    document.getElementById('fire').classList.add('out');
+    show('p4');
+    createFireworks();
+    playAudio('05-success', () => {
+        setTimeout(() => playAudio('06-gift', () => {
+            setTimeout(() => playAudio('07-end', () => {
+                setTimeout(() => {
+                    clearInterval(callTimer);
+                    show('p6');
+                    document.getElementById('finalBless').innerText = USER_BLESS;
+                    playBGM();
+                }, 1200);
+            }));
+        }), 800);
+    });
+}
+
+// 页面加载初始化
+window.onload = () => {
+    playRing(); // 预加载铃声
+    
+    // 🔥 绑定长按事件（兼容所有设备）
+    const blowBtn = document.getElementById('blowBtn');
+    
+    // 鼠标事件
+    blowBtn.addEventListener('mousedown', startBlow);
+    blowBtn.addEventListener('mouseup', stopBlow);
+    blowBtn.addEventListener('mouseleave', stopBlow);
+    
+    // 触摸事件（移动设备）
+    blowBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // 阻止默认行为，防止冲突
+        startBlow();
+    });
+    blowBtn.addEventListener('touchend', stopBlow);
+    blowBtn.addEventListener('touchcancel', stopBlow);
+};
+
+// 🔥 点击接听 → 播放铃声+所有语音
+document.getElementById('accept').onclick = () => {
+    // 播放来电铃声
+    ringAudio.play().catch(() => {});
+    setTimeout(() => {
+        ringAudio.pause();
+        show('p2');
+        startCallTimer();
+        
+        // 顺序播放小新语音
+        playAudio('01-open', () => {
+            setTimeout(() => playAudio('02-cake', () => {
+                setTimeout(() => playAudio('03-blessing', () => {
+                    setTimeout(() => {
+                        show('p3');
+                        playAudio('04-candle');
+                    }, 800);
+                }));
+            }), 800);
+        });
+    }, 500);
+};
+
+// 拒绝
+document.getElementById('refuse').onclick = () => {
+    alert("不接小新会伤心哦！");
+};
 </script>
 </body>
 </html>
