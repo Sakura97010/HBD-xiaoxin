@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法蜡笔小新来电</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+        body{background:#0a0a2a;color:#fff;min-height:100vh}
+        .page{width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:absolute;top:0;left:0}
+        .hide{display:none}
+
+        /* 来电界面 */
+        .avatar-box{position:relative;width:180px;height:180px;margin-bottom:30px}
+        .avatar{width:100%;height:100%;border-radius:50%;background:#ffcc00;display:flex;align-items:center;justify-content:center;font-size:80px}
+        .wave{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;border:3px solid #ffcc0066;animation:w 2s infinite}
+        @keyframes w{0%{transform:scale(1);opacity:1}100%{transform:scale(1.4);opacity:0}}
+        .title{font-size:26px;margin-bottom:10px}
+        .btns{display:flex;gap:40px;margin-top:40px}
+        .btn{width:70px;height:70px;border-radius:50%;border:none;color:#fff;font-size:14px}
+        .green{background:#00c853}
+        .red{background:#f44336}
+        .tip{color:#ffcc00;margin-top:10px}
+
+        /* 通话界面 */
+        .time{font-size:22px;margin:20px 0;color:#ffcc00}
+        .text{font-size:18px;margin-bottom:30px}
+
+        /* 吹蜡烛 */
+        .cake{width:160px;height:120px;background:#ffcc80;border-radius:10px;position:relative;margin-bottom:30px}
+        .candle{width:12px;height:50px;background:#fff;position:absolute;top:10px;left:50%;transform:translateX(-50%)}
+        .fire{width:16px;height:24px;background:linear-gradient(#ffeb3b,#ff9800);border-radius:50% 50% 10% 10%;position:absolute;top:-20px;left:50%;transform:translateX(-50%);animation:f 0.8s infinite alternate}
+        @keyframes f{0%{transform:translateX(-50%) scale(1)}100%{transform:translateX(-50%) scale(1.15)}}
+        .fire.out{height:0;opacity:0}
+
+        /* 许愿流星 */
+        .wish-input{padding:10px 15px;border-radius:8px;border:none;width:80%;margin:20px 0}
+        .meteor{position:absolute;width:100px;height:2px;background:linear-gradient(90deg,transparent,#fff);transform:rotate(-45deg);left:-100px;top:50%;opacity:0}
+        .meteor.fly{animation:m 2s forwards}
+        @keyframes m{0%{left:-100px;top:50%;opacity:1}100%{left:100%;top:0;opacity:0}}
+
+        /* 祝福卡片 */
+        .card{background:linear-gradient(180deg,#1a237e,#283593);padding:40px 30px;border-radius:20px;text-align:center}
+        .card h2{color:#ffcc00;margin-bottom:20px}
+        .card p{font-size:18px;line-height:1.6;margin-bottom:10px}
+    </style>
+</head>
+
+<body>
+    <!-- 1. 来电界面 -->
+    <div class="page" id="page1">
+        <div class="avatar-box">
+            <div class="avatar">👶</div>
+            <div class="wave"></div>
+        </div>
+        <div class="title">魔法蜡笔小新</div>
+        <div class="tip">来电中...</div>
+        <div class="btns">
+            <button class="btn red" id="refuse">拒绝</button>
+            <button class="btn green" id="accept">接听</button>
+        </div>
+    </div>
+
+    <!-- 2. 通话界面 -->
+    <div class="page hide" id="page2">
+        <div class="avatar" style="transform:scale(0.6)">👶</div>
+        <div class="time" id="time">00:00</div>
+        <div class="text" id="voice-text">正在播放语音...</div>
+    </div>
+
+    <!-- 3. 吹蜡烛 -->
+    <div class="page hide" id="page3">
+        <div class="cake">
+            <div class="candle">
+                <div class="fire" id="fire"></div>
+            </div>
+        </div>
+        <div class="text">按住吹灭蜡烛</div>
+        <button class="btn green" id="blow" onmousedown="blowStart()" onmouseup="blowEnd()" ontouchstart="blowStart()" ontouchend="blowEnd()">吹</button>
+    </div>
+
+    <!-- 4. 许愿流星 -->
+    <div class="page hide" id="page4">
+        <div class="text">许下你的愿望</div>
+        <input class="wish-input" id="wish" placeholder="输入愿望...">
+        <button class="btn green" id="sendWish">发射愿望</button>
+        <div class="meteor" id="meteor"></div>
+    </div>
+
+    <!-- 5. 挂断 -->
+    <div class="page hide" id="page5">
+        <div class="text">通话结束</div>
+        <div class="time" id="end-time">00:00</div>
+    </div>
+
+    <!-- 6. 祝福卡片 -->
+    <div class="page hide" id="page6">
+        <div class="card">
+            <h2>生日快乐！</h2>
+            <p id="card-name"></p>
+            <p id="card-bless"></p>
+            <p style="margin-top:30px">—— 魔法蜡笔小新</p>
+        </div>
+    </div>
+
+<script>
+// ====================== 你只需要改这里 ======================
+const USER_NAME = "孙师傅"       // 寿星名字
+const USER_BLESS = "生日快乐，希望你可以一直做自己喜欢的事，年年有今日，岁岁有今朝！" // 祝福语
+// ==========================================================
+
+let page = 1
+let refuse = 0
+let timer, sec=0
+let isBlowing = false
+
+// 语音
+function say(text){
+    window.speechSynthesis.cancel()
+    let u = new SpeechSynthesisUtterance(text)
+    u.rate = 0.85
+    u.pitch = 1.6
+    u.lang = "zh-CN"
+    window.speechSynthesis.speak(u)
+    return u
+}
+
+// 时间
+function startTimer(){
+    sec=0
+    timer = setInterval(()=>{
+        sec++
+        let m = String(Math.floor(sec/60)).padStart(2,"0")
+        let s = String(sec%60).padStart(2,"0")
+        document.getElementById("time").innerText = m+":"+s
+    },1000)
+}
+
+// 切换页
+function go(n){
+    document.querySelectorAll(".page").forEach(p=>p.classList.add("hide"))
+    document.getElementById("page"+n).classList.remove("hide")
+    page=n
+}
+
+// 1. 来电
+document.getElementById("accept").onclick=()=>{
+    go(2)
+    startTimer()
+    let u = say(`喎～你好呀！我是魔法师蜡笔小新！你是不是今天过生日的${USER_NAME}呀！`)
+    u.onend=()=>{
+        setTimeout(()=>{
+            say(`神秘好朋友让我对你说：${USER_BLESS}`)
+            setTimeout(()=>go(3), 3000)
+        },1000)
+    }
+}
+document.getElementById("refuse").onclick=()=>{
+    refuse++
+    if(refuse>=2) document.getElementById("accept").click()
+    else alert("不接电话吗？小新很伤心！")
+}
+
+// 3. 吹蜡烛
+function blowStart(){
+    isBlowing=true
+    document.getElementById("fire").classList.add("out")
+    setTimeout(()=>{
+        say("生日快乐！魔法生效啦！现在来许愿吧！")
+        setTimeout(()=>go(4), 2000)
+    },800)
+}
+function blowEnd(){
+    if(!isBlowing) document.getElementById("fire").classList.remove("out")
+}
+
+// 4. 许愿
+document.getElementById("sendWish").onclick=()=>{
+    document.getElementById("meteor").classList.add("fly")
+    say("你的愿望飞向星空啦！拜拜～")
+    setTimeout(()=>{
+        clearInterval(timer)
+        go(5)
+        let m=String(Math.floor(sec/60)).padStart(2,"0")
+        let s=String(sec%60).padStart(2,"0")
+        document.getElementById("end-time").innerText=m+":"+s
+        setTimeout(()=>go(6),2000)
+    },1500)
+}
+
+// 卡片赋值
+window.onload=()=>{
+    document.getElementById("card-name").innerText = "亲爱的 "+USER_NAME
+    document.getElementById("card-bless").innerText = USER_BLESS
+}
+</script>
+</body>
+</html>
