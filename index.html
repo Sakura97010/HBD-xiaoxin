@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
     <title>野原新之助来电</title>
-    <!-- 关键：头像使用极速CDN图片，约20KB，确保显示且加载快 -->
     <link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/wallpapercraft/wallpaper/avatar/xiaoxin.jpg" fetchpriority="high">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -12,10 +11,11 @@
         .page{width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute;top:0;left:0;padding:20px;transition:opacity 0.2s}
         .hide{display:none!important}
         #p1{background:linear-gradient(180deg,#0F172A,#1E293B,#2E1065)}
-        #p2,#p4,#p6{background-color:#1e1a2f}
+        #p2{background:#1e1a2f;background-size:cover;background-position:center}
         #p3{background:linear-gradient(180deg,#0F172A,#1E293B,#2E1065)}
+        #p4{background:#1e1a2f;background-size:cover;background-position:center}
+        #p6{background:#1e1a2f;background-size:cover;background-position:center}
         
-        /* 头像区域 */
         .avatar-box{position:relative;width:170px;height:170px;margin-bottom:30px}
         .avatar{width:100%;height:100%;border-radius:50%;background:#FFD100 center/cover no-repeat;box-shadow:0 0 20px rgba(255,209,0,0.5)}
         .wave{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;border:2px solid rgba(255,209,0,0.6);animation:waveAnim 2s infinite;pointer-events:none}
@@ -30,11 +30,9 @@
         .btn-accept{background:linear-gradient(135deg,#10B981,#059669)}
         .btn-refuse{background:linear-gradient(135deg,#EF4444,#DC2626)}
         
-        /* 通话页 */
         .talk-time{font-size:28px;font-weight:500;color:#FFD100;margin-bottom:12px;text-shadow:0 1px 3px black}
         .talk-text{font-size:18px;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);padding:8px 20px;border-radius:60px}
         
-        /* 蛋糕页 */
         .cake-pic{width:220px;margin-bottom:20px;border-radius:24px;overflow:hidden;box-shadow:0 12px 25px rgba(0,0,0,0.3)}
         .cake-pic img{width:100%;display:block}
         .flame{width:20px;height:32px;background:radial-gradient(circle,#FFEF00,#FF9A00);border-radius:50% 50% 20% 20%;margin:-10px auto 5px;animation:flicker 0.6s infinite alternate}
@@ -45,17 +43,15 @@
         .btn-blow{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#FFD100,#FFB400);border:none;font-weight:bold;font-size:17px;color:#2D1B00;cursor:pointer;box-shadow:0 6px 14px black;transition:0.05s linear;touch-action:manipulation}
         .btn-blow:active{transform:scale(0.96)}
         
-        /* 流星 */
-        .meteor{position:absolute;width:130px;height:2px;background:linear-gradient(90deg,transparent,#FFD100,#fff);transform:rotate(-45deg);left:-150px;top:20%;opacity:0;pointer-events:none}
+        .meteor{position:absolute;width:130px;height:2px;background:linear-gradient(90deg,transparent,#FFD100,#fff);transform:rotate(-45deg);left:-150px;top:15%;opacity:0;pointer-events:none}
         .meteor.fly{animation:meteorFly 1.6s forwards}
         @keyframes meteorFly{0%{left:-150px;opacity:1}100%{left:100%;opacity:0}}
         
-        /* 祝福文字 */
-        .blessing-text{position:absolute;top:28%;left:50%;transform:translateX(-50%);width:86%;font-size:26px;font-weight:600;color:#FF9F2E;text-align:center;text-shadow:0 2px 6px rgba(0,0,0,0.4);background:none;line-height:1.4}
+        /* 修复：祝福文字移到 1/4 位置 */
+        .blessing-text{position:absolute;top:25%;left:50%;transform:translateX(-50%);width:86%;font-size:26px;font-weight:600;color:#FF9F2E;text-align:center;text-shadow:0 2px 6px rgba(0,0,0,0.4);background:none;line-height:1.4}
     </style>
 </head>
 <body>
-    <!-- 来电页 -->
     <div class="page" id="p1">
         <div class="avatar-box">
             <div class="avatar" style="background-image: url('https://cdn.jsdelivr.net/gh/wallpapercraft/wallpaper/avatar/xiaoxin.jpg');"></div>
@@ -70,13 +66,11 @@
         </div>
     </div>
 
-    <!-- 通话页 -->
     <div class="page hide" id="p2">
         <div class="talk-time" id="ttime">00:00</div>
         <div class="talk-text">✨ 小新正在送祝福 ✨</div>
     </div>
 
-    <!-- 吹蜡烛页 -->
     <div class="page hide" id="p3">
         <div class="cake-pic"><img id="cakeImg" alt="生日蛋糕"></div>
         <div class="flame" id="fire"></div>
@@ -87,193 +81,142 @@
         </div>
     </div>
 
-    <!-- 烟花页 -->
     <div class="page hide" id="p4">
         <div class="meteor" id="meteor"></div>
     </div>
 
-    <!-- 结尾祝福页 -->
     <div class="page hide" id="p6">
         <div class="blessing-text" id="finalBless"></div>
     </div>
 
 <script>
-    // ---------- 完全修复版 ----------
-    const USER_BLESS = "✨ "愿你做自由的自己，年年有今日，岁岁有今朝！" ✨";
+    // 修复1：引号嵌套错误
+    const USER_BLESS = "✨ 愿你做自由的自己，年年有今日，岁岁有今朝！✨";
     let ringAudio = null;
     let bgmAudio = null;
     let blowTimer = null, blowProgress = 0, isBlowing = false;
     let callTimer = null, sec = 0;
-    let audioContextUnlocked = false;
+    let audioUnlocked = false;
 
-    // 辅助函数：安全播放音频（自动解锁）
-    function safePlay(audioElement) {
-        if (!audioElement) return Promise.reject("no audio");
-        return audioElement.play().catch(err => {
-            console.warn("play failed", err);
-            // 尝试重新解锁
-            return unlockAudio().then(() => audioElement.play());
-        });
+    // 修复：统一停止所有音频
+    function stopAllAudio() {
+        if(ringAudio) { ringAudio.pause(); ringAudio.currentTime = 0; }
+        if(bgmAudio) { bgmAudio.pause(); bgmAudio.currentTime = 0; }
+        document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
     }
 
-    // 解锁音频上下文（必须在用户点击后执行）
+    // 修复：手机/微信音频解锁
     function unlockAudio() {
-        if (audioContextUnlocked) return Promise.resolve(true);
-        // 创建并播放一个极短的空音频
-        const silentAudio = new Audio();
-        silentAudio.src = "data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtU291bmRibGFzdCBEZWNvZGVyIC0gU0lMRU5UIExBQkVMRVNTIEJBQ0tHUk9VTkQuLi4=";
-        silentAudio.volume = 0;
-        return silentAudio.play().then(() => {
-            silentAudio.pause();
-            audioContextUnlocked = true;
-            console.log("audio unlocked");
-            return true;
-        }).catch(() => {
-            // 即使失败也标记为已解锁，避免阻塞
-            audioContextUnlocked = true;
-            return true;
+        if(audioUnlocked) return Promise.resolve();
+        return new Promise(resolve => {
+            const audio = new Audio();
+            audio.src = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQGAACAAAAAA";
+            audio.volume = 0;
+            audio.play().then(() => {
+                audioUnlocked = true;
+                resolve();
+            }).catch(() => {
+                audioUnlocked = true;
+                resolve();
+            });
         });
     }
 
-    // 播放音频文件并返回Promise
-    function playSound(file, loop = false) {
-        return new Promise((resolve) => {
+    // 修复：安全播放音频
+    function playAudio(file, loop = false) {
+        return new Promise(resolve => {
+            stopAllAudio();
             const audio = new Audio(`./${file}.mp3`);
-            if (loop) audio.loop = true;
-            audio.volume = 0.7;
-            audio.onended = () => resolve();
-            audio.onerror = () => resolve();
-            // 确保解锁后再播放
-            unlockAudio().then(() => {
-                audio.play().catch(() => resolve());
-            }).catch(() => resolve());
+            audio.loop = loop;
+            audio.volume = 0.4;
+            audio.onended = resolve;
+            audio.onerror = resolve;
+            unlockAudio().then(() => audio.play().catch(resolve));
         });
     }
 
     // 顺序播放
     async function playSequence(files) {
-        for (let f of files) {
-            await playSound(f);
-        }
+        for(let f of files) await playAudio(f);
     }
 
-    // 设置页面背景（懒加载）
-    function setBackground(pageId, url) {
-        const page = document.getElementById(pageId);
-        if (page && !page.style.backgroundImage) {
-            const img = new Image();
-            img.onload = () => { page.style.backgroundImage = `url('${url}')`; };
-            img.src = url;
-        }
+    // 修复：图片加载容错
+    function setBg(id, url) {
+        const el = document.getElementById(id);
+        if(!el) return;
+        const img = new Image();
+        img.onload = () => { el.style.backgroundImage = `url(${url})`; };
+        img.onerror = () => { el.style.backgroundColor = "#1e1a2f"; };
+        img.src = url;
     }
 
-    // 加载蛋糕图片
-    function loadCakeImage() {
-        const cakeImg = document.getElementById('cakeImg');
-        if (cakeImg && !cakeImg.src) {
-            cakeImg.src = './cake-img.jpg';
-        }
+    function loadCake() {
+        const el = document.getElementById("cakeImg");
+        if(el) el.src = "./cake-img.jpg";
     }
 
-    // 显示页面
-    function showPage(id) {
+    function show(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.add('hide'));
         document.getElementById(id).classList.remove('hide');
-        if (id === 'p6') {
-            if (!bgmAudio) {
-                bgmAudio = new Audio('./bgm.mp3');
-                bgmAudio.loop = true;
-                bgmAudio.volume = 0.4;
-                unlockAudio().then(() => bgmAudio.play().catch(()=>{}));
-            } else {
-                unlockAudio().then(() => bgmAudio.play().catch(()=>{}));
-            }
+        if(id === "p6") {
+            playAudio("bgm", true);
         }
     }
 
-    // 通话计时
-    function startCallTimer() {
-        if (callTimer) clearInterval(callTimer);
-        sec = 0;
-        const ttime = document.getElementById('ttime');
+    function startTimer() {
+        clearInterval(callTimer); sec = 0;
         callTimer = setInterval(() => {
             sec++;
-            let m = String(Math.floor(sec/60)).padStart(2,'0');
-            let s = String(sec%60).padStart(2,'0');
-            if (ttime) ttime.innerText = `${m}:${s}`;
+            const m = String(Math.floor(sec/60)).padStart(2,'0');
+            const s = String(sec%60).padStart(2,'0');
+            document.getElementById("ttime").innerText = `${m}:${s}`;
         }, 1000);
     }
 
-    // 接听逻辑
-    async function onAccept() {
-        // 先解锁音频
+    // 接听
+    async function accept() {
         await unlockAudio();
-        // 播放来电铃声（循环）
-        ringAudio = new Audio('./ring.mp3');
+        ringAudio = new Audio("./ring.mp3");
         ringAudio.loop = true;
-        await ringAudio.play().catch(()=>{});
-        // 模拟接听延迟
+        ringAudio.volume = 0.4;
+        ringAudio.play().catch(()=>{});
+
         setTimeout(async () => {
-            if (ringAudio) {
-                ringAudio.pause();
-                ringAudio = null;
-            }
-            showPage('p2');
-            startCallTimer();
-            // 加载背景
-            setBackground('p2', './call-bg.jpg');
-            setBackground('p4', './call-bg.jpg');
-            setBackground('p6', './card-bg.jpg');
-            loadCakeImage();
-            // 播放祝福序列
-            await playSequence(['01-open', '02-cake', '03-blessing']);
-            showPage('p3');
-            playSound('04-candle');
+            stopAllAudio();
+            show("p2");
+            startTimer();
+            setBg("p2", "./call-bg.jpg");
+            setBg("p4", "./call-bg.jpg");
+            setBg("p6", "./card-bg.jpg");
+            loadCake();
+
+            await playSequence(["01-open","02-cake","03-blessing"]);
+            show("p3");
+            playAudio("04-candle");
         }, 400);
     }
 
-    // 拒绝提示
-    document.getElementById('refuse').onclick = () => {
-        alert("📞 不接小新会伤心的哦～请接听吧！");
-    };
-
-    // 吹蜡烛逻辑
+    // 吹蜡烛
     function startBlow() {
-        if (isBlowing) return;
-        isBlowing = true;
-        blowProgress = 0;
-        const bar = document.getElementById('bar');
-        if (blowTimer) clearInterval(blowTimer);
+        if(isBlowing) return;
+        isBlowing = true; blowProgress = 0;
+        const bar = document.getElementById("bar");
+        bar.style.width = "0%";
+        clearInterval(blowTimer);
         blowTimer = setInterval(() => {
             blowProgress += 100;
-            let percent = Math.min(100, (blowProgress / 3000) * 100);
-            if (bar) bar.style.width = percent + '%';
-            if (blowProgress >= 3000) {
+            const p = Math.min(100, (blowProgress/3000)*100);
+            bar.style.width = p + "%";
+            if(blowProgress >= 3000) {
                 clearInterval(blowTimer);
-                // 吹灭火焰
-                const flame = document.getElementById('fire');
-                if (flame) flame.classList.add('out');
-                showPage('p4');
-                // 流星动画
-                const meteor = document.getElementById('meteor');
-                if (meteor) {
-                    meteor.classList.remove('fly');
-                    void meteor.offsetWidth;
-                    meteor.classList.add('fly');
-                }
-                // 播放成功音效和礼物音效
-                playSequence(['05-success', '06-gift', '07-end']).then(() => {
-                    showPage('p6');
-                    document.getElementById('finalBless').innerText = USER_BLESS;
-                    // 自动播放BGM
-                    if (!bgmAudio) {
-                        bgmAudio = new Audio('./bgm.mp3');
-                        bgmAudio.loop = true;
-                        unlockAudio().then(() => bgmAudio.play().catch(()=>{}));
-                    }
-                }).catch(() => {
-                    showPage('p6');
-                    document.getElementById('finalBless').innerText = USER_BLESS;
+                document.getElementById("fire").classList.add("out");
+                show("p4");
+                const m = document.getElementById("meteor");
+                m.classList.remove("fly"); void m.offsetWidth; m.classList.add("fly");
+
+                playSequence(["05-success","06-gift","07-end"]).then(() => {
+                    show("p6");
+                    document.getElementById("finalBless").innerText = USER_BLESS;
                 });
                 isBlowing = false;
             }
@@ -281,34 +224,24 @@
     }
 
     function stopBlow() {
-        if (isBlowing && blowProgress < 3000) {
+        if(isBlowing && blowProgress < 3000) {
             clearInterval(blowTimer);
-            document.getElementById('bar').style.width = '0%';
+            document.getElementById("bar").style.width = "0%";
             isBlowing = false;
         }
     }
 
-    // 绑定吹蜡烛事件
-    const blowBtn = document.getElementById('blowBtn');
-    blowBtn.addEventListener('mousedown', startBlow);
-    blowBtn.addEventListener('mouseup', stopBlow);
-    blowBtn.addEventListener('mouseleave', stopBlow);
-    blowBtn.addEventListener('touchstart', startBlow, { passive: false });
-    blowBtn.addEventListener('touchend', stopBlow);
-    blowBtn.addEventListener('touchcancel', stopBlow);
-
-    // 接听按钮
-    document.getElementById('accept').addEventListener('click', onAccept);
-
-    // 确保首屏头像立即显示，并且预加载其他资源（空闲时）
-    window.onload = () => {
-        // 预加载蛋糕图片和背景图（不阻塞）
-        setTimeout(() => {
-            new Image().src = './cake-img.jpg';
-            new Image().src = './call-bg.jpg';
-            new Image().src = './card-bg.jpg';
-        }, 100);
-    };
+    // 绑定
+    document.getElementById("accept").onclick = accept;
+    document.getElementById("refuse").onclick = () => alert("📞 不接小新会伤心的哦～");
+    
+    const btn = document.getElementById("blowBtn");
+    btn.addEventListener("mousedown", startBlow);
+    btn.addEventListener("mouseup", stopBlow);
+    btn.addEventListener("mouseleave", stopBlow);
+    btn.addEventListener("touchstart", (e) => { e.preventDefault(); startBlow(); });
+    btn.addEventListener("touchend", stopBlow);
+    btn.addEventListener("touchcancel", stopBlow);
 </script>
 </body>
 </html>
