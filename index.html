@@ -2,74 +2,292 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>野原新之助来电</title>
+    <!-- 关键：仅预加载首屏必需的头像图片，其余图片延迟加载，大幅提升首屏速度 -->
     <link rel="preload" as="image" href="./xiaoxin-avatar.jpg" fetchpriority="high">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-        body{color:#fff;font-family:system-ui;overflow:hidden}
-        .page{width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute;top:0;left:0;padding:20px}
-        .hide{display:none!important}
-
-        /* 来电页纯色渐变 */
-        #p1{background: linear-gradient(180deg, #0F172A, #1E293B, #2E1065);}
-        /* 通话页背景 */
-        #p2{background:url('./call-bg.jpg') center/cover no-repeat;}
-        /* 吹蜡烛页面纯色 */
-        #p3{background: linear-gradient(180deg, #0F172A, #1E293B, #2E1065);}
-        /* 烟花页面 使用你的GIF动图 */
-        #p4{background:url('./fire-gif.gif') center/cover no-repeat;}
-        /* 结尾祝福页 */
-        #p6{background:url('./card-bg.jpg') center/cover no-repeat;}
-
-        .avatar-box{position:relative;width:190px;height:190px;margin-bottom:35px;z-index:1}
-        .avatar{width:100%;height:100%;border-radius:50%;background:#FFD100 url('./xiaoxin-avatar.jpg')center/cover no-repeat;box-shadow:0 0 25px #FFD10066}
-        .wave{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;border:2px solid #FFD10066;animation:w 2s infinite}
-        .wave:nth-child(3){animation-delay:.7s}
-        @keyframes w{0%{transform:scale(1);opacity:1}100%{transform:scale(1.4);opacity:0}}
-
-        .call-title{font-size:28px;color:#FFD100;margin-bottom:8px;}
-        .call-sub{font-size:15px;color:#ccc;}
-        .btn-group{display:flex;gap:45px;margin-top:40px}
-        .btn{width:75px;height:75px;border-radius:50%;border:none;color:#fff;font-size:15px;font-weight:500}
-        .btn-accept{background:linear-gradient(135deg,#10B981,#059669)}
-        .btn-refuse{background:linear-gradient(135deg,#EF4444,#DC2626)}
-
-        .talk-time{font-size:22px;color:#FFD100;margin:10px 0}
-        .talk-text{font-size:18px;max-width:300px;line-height:1.5;text-align:center}
-
-        .cake-pic{width:220px;height:auto;margin:0 auto 25px;border-radius:12px;overflow:hidden}
-        .cake-pic img{width:100%;height:auto;display:block}
-        .flame{width:18px;height:28px;background:linear-gradient(180deg,#FFEF00,#FF9A00);border-radius:50% 50% 10% 10%;position:relative;top:-15px;margin:0 auto;animation:f .7s infinite alternate}
-        @keyframes f{0%{transform:scale(1)}100%{transform:scale(1.1)}}
-        .flame.out{opacity:0;height:0}
-        .progress{width:140px;height:5px;background:#333;border-radius:2px;margin:12px auto}
-        .progress-bar{height:100%;width:0%;background:#FFD100;transition:width .1s linear}
-        .btn-blow{width:95px;height:95px;border-radius:50%;background:linear-gradient(135deg,#FFD100,#FFB400);border:none;font-size:17px;font-weight:500;color:#222;
-            -webkit-touch-callout: none;-webkit-user-select: none;user-select: none;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            color: #fff;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            background: #0F172A; /* fallback */
+        }
+        .page {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 20px;
+            transition: opacity 0.2s ease;
+        }
+        .hide {
+            display: none !important;
         }
 
-        .meteor{display:none;}
+        /* 来电页：纯色渐变，无背景图请求 */
+        #p1 {
+            background: linear-gradient(180deg, #0F172A, #1E293B, #2E1065);
+        }
+        /* 通话页、烟花页、结尾页背景图改为动态加载，避免首屏竞争 */
+        #p2, #p4, #p6 {
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+        /* 蛋糕页纯色背景（后续无背景图） */
+        #p3 {
+            background: linear-gradient(180deg, #0F172A, #1E293B, #2E1065);
+        }
 
-        /* 结尾文字 上方1/4位置 橙色无框 */
-        .blessing-text{
-            position:absolute;
-            top:25%;
-            left:50%;
-            transform:translateX(-50%);
-            font-size:28px;
-            color:#ff9500;
-            text-align:center;
-            background:none !important;
-            padding:0;
-            border-radius:0;
-            width:90%;
+        /* 头像及脉冲动画 - 优化渲染层 */
+        .avatar-box {
+            position: relative;
+            width: 190px;
+            height: 190px;
+            margin-bottom: 35px;
+            z-index: 1;
+            will-change: transform;
+        }
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #FFD100 url('./xiaoxin-avatar.jpg') center / cover no-repeat;
+            box-shadow: 0 0 25px rgba(255, 209, 0, 0.4);
+            backface-visibility: hidden;
+        }
+        .wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 209, 0, 0.5);
+            animation: waveAnim 2s infinite;
+        }
+        .wave:nth-child(3) {
+            animation-delay: 0.7s;
+        }
+        @keyframes waveAnim {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.4);
+                opacity: 0;
+            }
+        }
+
+        .call-title {
+            font-size: 28px;
+            color: #FFD100;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .call-sub {
+            font-size: 15px;
+            color: #ccc;
+        }
+        .btn-group {
+            display: flex;
+            gap: 45px;
+            margin-top: 40px;
+        }
+        .btn {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            border: none;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn-accept {
+            background: linear-gradient(135deg, #10B981, #059669);
+        }
+        .btn-refuse {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+        }
+
+        /* 通话页居中文字 */
+        .talk-time {
+            font-size: 26px;
+            font-weight: 500;
+            color: #FFD100;
+            margin: 10px 0;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .talk-text {
+            font-size: 18px;
+            max-width: 300px;
+            line-height: 1.5;
+            text-align: center;
+            background: rgba(0,0,0,0.4);
+            padding: 8px 16px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* 蛋糕吹蜡烛区域 */
+        .cake-pic {
+            width: 220px;
+            height: auto;
+            margin: 0 auto 25px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+        }
+        .cake-pic img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .flame {
+            width: 20px;
+            height: 32px;
+            background: radial-gradient(circle, #FFEF00, #FF9A00);
+            border-radius: 50% 50% 20% 20%;
+            position: relative;
+            top: -16px;
+            margin: 0 auto;
+            animation: flicker 0.7s infinite alternate;
+            box-shadow: 0 0 8px rgba(255,160,0,0.8);
+        }
+        @keyframes flicker {
+            0% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+        .flame.out {
+            opacity: 0;
+            height: 0;
+            animation: none;
+        }
+        .progress {
+            width: 160px;
+            height: 6px;
+            background: #334155;
+            border-radius: 10px;
+            margin: 12px auto;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #FFD100;
+            transition: width 0.05s linear;
+            border-radius: 10px;
+        }
+        .btn-blow {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD100, #FFB400);
+            border: none;
+            font-size: 17px;
+            font-weight: bold;
+            color: #2D1B00;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+            transition: all 0.05s linear;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .btn-blow:active {
+            transform: scale(0.96);
+        }
+
+        /* 流星效果 */
+        .meteor {
+            position: absolute;
+            width: 150px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #FFD100, #fff);
+            transform: rotate(-45deg);
+            left: -150px;
+            top: 20%;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .meteor.fly {
+            animation: meteorFly 1.8s forwards;
+        }
+        @keyframes meteorFly {
+            0% {
+                left: -150px;
+                opacity: 1;
+            }
+            100% {
+                left: 100%;
+                opacity: 0;
+            }
+        }
+
+        /* 最终祝福词 : 无背景框，橙色醒目 */
+        .blessing-text {
+            position: absolute;
+            top: 28%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            font-weight: 600;
+            color: #FF9F2E;
+            text-align: center;
+            background: none !important;
+            padding: 0;
+            width: 86%;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+            line-height: 1.4;
+        }
+
+        /* 优化加载中的无闪烁 */
+        .page {
+            background-color: #0F172A;
+        }
+        /* 保证通话页背景图加载后平滑 */
+        #p2, #p4, #p6 {
+            transition: background 0.2s;
+        }
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            display: none;
         }
     </style>
 </head>
 <body>
+    <!-- 来电页面 -->
     <div class="page" id="p1">
-        <div class="avatar-box"><div class="avatar"></div><div class="wave"></div><div class="wave"></div></div>
+        <div class="avatar-box">
+            <div class="avatar"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+        </div>
         <div class="call-title">野原新之助</div>
         <div class="call-sub">生日来电中...</div>
         <div class="btn-group">
@@ -78,149 +296,452 @@
         </div>
     </div>
 
+    <!-- 通话页面 (无头像，完全文字) -->
     <div class="page hide" id="p2">
         <div class="talk-time" id="ttime">00:00</div>
-        <div class="talk-text">小新送祝福中~</div>
+        <div class="talk-text">✨ 小新送祝福中 ✨</div>
     </div>
 
+    <!-- 吹蜡烛页面 -->
     <div class="page hide" id="p3">
-        <div class="cake-pic">
-            <img src="./cake-img.jpg" alt="生日蛋糕">
+        <div class="cake-pic" id="cakeContainer">
+            <!-- 蛋糕图片延迟加载，初始无src -->
+            <img id="cakeImg" alt="生日蛋糕" style="width:100%; border-radius:16px;">
         </div>
         <div class="flame" id="fire"></div>
         <div style="text-align:center">
-            <div style="color:#FFD100;font-size:20px;margin-bottom:8px">长按3秒吹灭蜡烛</div>
+            <div style="color:#FFD100; font-size:20px; margin-bottom:8px; font-weight:500;">🎂 长按3秒吹灭蜡烛 🎂</div>
             <div class="progress"><div class="progress-bar" id="bar"></div></div>
-            <button class="btn-blow" id="blowBtn">长按吹灭</button>
+            <button class="btn-blow" id="blowBtn">💨 长按吹灭</button>
         </div>
     </div>
 
-    <div class="page fireworks-page hide" id="p4"></div>
+    <!-- 烟花页面（背景动态加载） -->
+    <div class="page fireworks-page hide" id="p4">
+        <div class="meteor" id="meteor"></div>
+    </div>
 
+    <!-- 结尾祝福页面 -->
     <div class="page card-page hide" id="p6">
         <div class="blessing-text" id="finalBless"></div>
     </div>
 
 <script>
-const USER_BLESS = "愿你做自由的自己，年年有今日，岁岁有今朝！";
-let ringAudio = null;
-let bgmAudio = null;
-let blowTimer, blowProgress = 0, BLOW_TIME = 3000;
-let callTimer, sec = 0;
-let isBlowing = false;
-
-function playAudio(file, callback) {
-    try {
-        document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
-        if (ringAudio) { ringAudio.pause(); ringAudio.currentTime = 0; }
-        const audio = new Audio(`./${file}.mp3`);
-        audio.play().then(()=>{audio.onended = callback;}).catch(()=>{callback?.()});
-        return audio;
-    } catch (e) { callback?.(); return null; }
-}
-
-function initRingSound(){
-    ringAudio = new Audio('./ring.mp3');
-    ringAudio.loop = true;
-    ringAudio.volume = 0.5;
-}
-
-function playEndBGM(){
-    if(bgmAudio) return;
-    bgmAudio = new Audio('./bgm.mp3');
-    bgmAudio.loop = true;
-    bgmAudio.volume = 0.35;
-    bgmAudio.play().catch(()=>{});
-}
-
-function startCallTimer() {
-    sec = 0;
-    callTimer = setInterval(() => {
-        sec++;
-        let m = String(Math.floor(sec/60)).padStart(2,'0');
-        let s = String(sec%60).padStart(2,'0');
-        document.getElementById('ttime').innerText = `${m}:${s}`;
-    }, 1000);
-}
-
-function show(id) {
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hide'));
-    document.getElementById(id).classList.remove('hide');
-    if(id === 'p6') playEndBGM();
-}
-
-function startBlow() {
-    if (isBlowing) return;
-    isBlowing = true;
-    blowProgress = 0;
-    document.getElementById('bar').style.width = '0%';
-    blowTimer = setInterval(() => {
-        blowProgress += 100;
-        let percentage = Math.min(100, (blowProgress / BLOW_TIME)*100);
-        document.getElementById('bar').style.width = percentage + '%';
-        if (blowProgress >= BLOW_TIME) {
-            completeBlow();
+    // ----------------------------- 性能优化核心: 懒加载图片 + 音频预解锁 -----------------------------
+    const USER_BLESS = "✨ "愿你做自由的自己，年年有今日，岁岁有今朝！" ✨";
+    
+    // 音频全局控制
+    let ringAudio = null;          // 来电铃声
+    let bgmAudio = null;           // 结尾背景音乐
+    let currentAudio = null;       // 当前播放的音频（顺序播放）
+    let audioUnlocked = false;     // 是否已通过用户手势解锁音频
+    let blowTimer = null;
+    let blowProgress = 0;
+    const BLOW_TIME = 3000;
+    let callTimer = null;
+    let sec = 0;
+    let isBlowing = false;
+    
+    // 图片延迟加载映射 (避免首屏请求)
+    const lazyImages = {
+        callBg: './call-bg.jpg',
+        cakeImg: './cake-img.jpg',
+        cardBg: './card-bg.jpg'
+    };
+    
+    // ----------------------------- 辅助函数：优雅加载背景/图片 -----------------------------
+    function setBackgroundLater(elementId, imgUrl) {
+        if (!imgUrl) return;
+        const el = document.getElementById(elementId);
+        if (el) {
+            // 使用 requestIdleCallback 或 setTimeout 低优先级加载背景图，不影响首屏渲染
+            const loadBg = () => {
+                const img = new Image();
+                img.onload = () => {
+                    el.style.backgroundImage = `url('${imgUrl}')`;
+                    el.style.backgroundSize = 'cover';
+                    el.style.backgroundPosition = 'center';
+                };
+                img.onerror = () => console.warn(`背景图加载失败: ${imgUrl}`);
+                img.src = imgUrl;
+            };
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(loadBg, { timeout: 2000 });
+            } else {
+                setTimeout(loadBg, 100);
+            }
         }
-    }, 100);
-}
-function stopBlow() {
-    if (isBlowing && blowProgress < BLOW_TIME) {
-        clearInterval(blowTimer);
-        document.getElementById('bar').style.width = '0%';
-        isBlowing = false;
     }
-}
-function completeBlow() {
-    clearInterval(blowTimer);
-    isBlowing = false;
-    document.getElementById('fire').classList.add('out');
-    show('p4');
-    playAudio('05-success', () => {
-        setTimeout(() => playAudio('06-gift', () => {
-            setTimeout(() => playAudio('07-end', () => {
-                setTimeout(() => {
-                    clearInterval(callTimer);
-                    show('p6');
-                    document.getElementById('finalBless').innerText = USER_BLESS;
-                }, 1200);
-            }));
-        }), 800);
-    });
-}
-
-window.onload = () => {
-    initRingSound();
-    const blowBtn = document.getElementById('blowBtn');
-    blowBtn.addEventListener('mousedown', startBlow);
-    blowBtn.addEventListener('mouseup', stopBlow);
-    blowBtn.addEventListener('mouseleave', stopBlow);
-    blowBtn.addEventListener('touchstart', e=>{e.preventDefault();startBlow()});
-    blowBtn.addEventListener('touchend', stopBlow);
-    blowBtn.addEventListener('touchcancel', stopBlow);
-};
-
-document.getElementById('accept').addEventListener('click', () => {
-    ringAudio.play().catch(()=>{});
-    setTimeout(() => {
-        ringAudio.pause();
-        show('p2');
-        startCallTimer();
-        playAudio('01-open', () => {
-            setTimeout(() => playAudio('02-cake', () => {
-                setTimeout(() => playAudio('03-blessing', () => {
-                    setTimeout(() => {
-                        show('p3');
-                        playAudio('04-candle');
-                    }, 800);
-                }));
-            }), 800);
+    
+    // 预加载蛋糕图片（在用户接听后执行，不会阻塞来电页面）
+    function preloadCakeImage() {
+        const cakeImgEl = document.getElementById('cakeImg');
+        if (cakeImgEl && !cakeImgEl.src) {
+            const img = new Image();
+            img.onload = () => {
+                cakeImgEl.src = lazyImages.cakeImg;
+            };
+            img.onerror = () => {
+                cakeImgEl.alt = '🎂 生日蛋糕 🎂';
+                cakeImgEl.style.padding = '20px';
+                cakeImgEl.style.background = '#FFE4B5';
+            };
+            img.src = lazyImages.cakeImg;
+        }
+    }
+    
+    // 设置结尾页面背景 (p6) 以及额外效果
+    function setCardBackground() {
+        const p6 = document.getElementById('p6');
+        if (p6 && lazyImages.cardBg) {
+            const img = new Image();
+            img.onload = () => {
+                p6.style.backgroundImage = `url('${lazyImages.cardBg}')`;
+                p6.style.backgroundSize = 'cover';
+                p6.style.backgroundPosition = 'center';
+            };
+            img.src = lazyImages.cardBg;
+        }
+    }
+    
+    // 为通话页和烟花页加载背景（call-bg.jpg）在接听时激活
+    function loadCallBackground() {
+        const pagesNeedBg = ['p2', 'p4'];
+        pagesNeedBg.forEach(id => {
+            const page = document.getElementById(id);
+            if (page && !page.style.backgroundImage) {
+                const img = new Image();
+                img.onload = () => {
+                    page.style.backgroundImage = `url('${lazyImages.callBg}')`;
+                    page.style.backgroundSize = 'cover';
+                    page.style.backgroundPosition = 'center';
+                };
+                img.src = lazyImages.callBg;
+            }
         });
-    }, 300);
-});
-
-document.getElementById('refuse').onclick = () => {
-    alert("不接小新会伤心哦！");
-};
+    }
+    
+    // ----------------------------- 音频解锁 + 预加载所有音频（不自动播放，仅加载缓存）-----------------------------
+    // 音频文件列表 (按顺序)
+    const audioFiles = [
+        'ring', 'bgm', 
+        '01-open', '02-cake', '03-blessing', '04-candle',
+        '05-success', '06-gift', '07-end'
+    ];
+    const audioCache = {};
+    
+    // 预加载所有音频 (不播放，只为了提前缓存，接听后立即播放无延迟)
+    function preloadAllAudios() {
+        for (let file of audioFiles) {
+            try {
+                const audio = new Audio(`./${file}.mp3`);
+                audio.preload = 'auto';
+                audio.load();
+                audioCache[file] = audio;
+            } catch(e) { console.warn(`预加载音频 ${file} 失败`, e); }
+        }
+    }
+    
+    // 在用户首次交互时解锁音频环境 (重要: 解决移动端自动播放策略)
+    function unlockAudioContext() {
+        if (audioUnlocked) return true;
+        // 创建静默音频播放并立即暂停，以此完成手势授权
+        const silentAudio = new Audio();
+        silentAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtU291bmRibGFzdCBEZWNvZGVyIC0gU0lMRU5UIExBQkVMRVNTIEJBQ0tHUk9VTkQuLi4=';
+        silentAudio.volume = 0;
+        silentAudio.play().then(() => {
+            silentAudio.pause();
+            audioUnlocked = true;
+            console.log('音频环境已解锁');
+        }).catch(err => {
+            // 某些浏览器仍可能报错，但不影响后续
+            audioUnlocked = true;
+            console.log('解锁尝试完成');
+        });
+        return audioUnlocked;
+    }
+    
+    // 优化播放: 直接使用缓存的audio或新建，确保已经预加载
+    function playAudioFile(fileName, onEndCallback) {
+        return new Promise((resolve) => {
+            let audio = audioCache[fileName];
+            if (!audio || audio.ended || audio.paused) {
+                audio = new Audio(`./${fileName}.mp3`);
+                audioCache[fileName] = audio;
+            }
+            // 停止之前可能还在播放的相同音频
+            audio.pause();
+            audio.currentTime = 0;
+            audio.volume = 0.8;
+            audio.onended = () => {
+                if (onEndCallback) onEndCallback();
+                resolve();
+            };
+            audio.play().catch(err => {
+                console.warn(`播放音频 ${fileName}.mp3 失败:`, err);
+                if (onEndCallback) onEndCallback();
+                resolve();
+            });
+        });
+    }
+    
+    // 顺序播放音频序列 (保证流程不中断)
+    async function playSequence(audioNames, onComplete) {
+        for (let name of audioNames) {
+            await playAudioFile(name);
+        }
+        if (onComplete) onComplete();
+    }
+    
+    // 初始化来电铃声 (循环且只缓存)
+    function initRingSound() {
+        if (!audioCache['ring']) {
+            ringAudio = new Audio('./ring.mp3');
+            ringAudio.loop = true;
+            ringAudio.volume = 0.5;
+            audioCache['ring'] = ringAudio;
+        } else {
+            ringAudio = audioCache['ring'];
+            ringAudio.loop = true;
+        }
+    }
+    
+    // 播放来电铃声 (循环)
+    function startRing() {
+        if (ringAudio) {
+            ringAudio.currentTime = 0;
+            ringAudio.play().catch(e => console.warn('播放来电铃声失败', e));
+        }
+    }
+    
+    function stopRing() {
+        if (ringAudio) {
+            ringAudio.pause();
+            ringAudio.currentTime = 0;
+        }
+    }
+    
+    // 结尾BGM播放 (已经解锁过，一定能播放)
+    function playEndBGM() {
+        if (bgmAudio && !bgmAudio.paused) return;
+        if (audioCache['bgm']) {
+            bgmAudio = audioCache['bgm'];
+            bgmAudio.loop = true;
+            bgmAudio.volume = 0.4;
+            bgmAudio.play().catch(e => console.warn('bgm播放失败', e));
+        } else {
+            bgmAudio = new Audio('./bgm.mp3');
+            bgmAudio.loop = true;
+            bgmAudio.volume = 0.4;
+            bgmAudio.play().catch(() => {});
+            audioCache['bgm'] = bgmAudio;
+        }
+    }
+    
+    // 停止当前通话计时
+    function stopCallTimer() {
+        if (callTimer) {
+            clearInterval(callTimer);
+            callTimer = null;
+        }
+    }
+    
+    function startCallTimerUI() {
+        sec = 0;
+        const ttime = document.getElementById('ttime');
+        if (callTimer) clearInterval(callTimer);
+        callTimer = setInterval(() => {
+            sec++;
+            let m = String(Math.floor(sec / 60)).padStart(2, '0');
+            let s = String(sec % 60).padStart(2, '0');
+            if (ttime) ttime.innerText = `${m}:${s}`;
+        }, 1000);
+    }
+    
+    // 页面切换
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hide'));
+        const target = document.getElementById(pageId);
+        if (target) target.classList.remove('hide');
+        // 当显示结尾页时自动播放BGM
+        if (pageId === 'p6') {
+            playEndBGM();
+        }
+    }
+    
+    // 烟花特效
+    function createFireworks() {
+        const meteor = document.getElementById('meteor');
+        if (meteor) {
+            meteor.classList.remove('fly');
+            void meteor.offsetWidth; // 强制重绘
+            meteor.classList.add('fly');
+        }
+    }
+    
+    // 吹蜡烛逻辑
+    function startBlow() {
+        if (isBlowing) return;
+        isBlowing = true;
+        blowProgress = 0;
+        const bar = document.getElementById('bar');
+        if (bar) bar.style.width = '0%';
+        if (blowTimer) clearInterval(blowTimer);
+        blowTimer = setInterval(() => {
+            blowProgress += 100;
+            let percentage = Math.min(100, (blowProgress / BLOW_TIME) * 100);
+            if (bar) bar.style.width = percentage + '%';
+            if (blowProgress >= BLOW_TIME) {
+                completeBlow();
+            }
+        }, 100);
+    }
+    
+    function stopBlow() {
+        if (isBlowing && blowProgress < BLOW_TIME) {
+            clearInterval(blowTimer);
+            const bar = document.getElementById('bar');
+            if (bar) bar.style.width = '0%';
+            isBlowing = false;
+        }
+    }
+    
+    function completeBlow() {
+        clearInterval(blowTimer);
+        isBlowing = false;
+        const flame = document.getElementById('fire');
+        if (flame) flame.classList.add('out');
+        // 显示烟花页面 (此时背景已存在 call-bg)
+        showPage('p4');
+        createFireworks();
+        // 顺序播放后续音效
+        playSequence(['05-success', '06-gift', '07-end'], async () => {
+            // 播放完成后展示祝福页面
+            stopCallTimer();
+            showPage('p6');
+            const finalEl = document.getElementById('finalBless');
+            if (finalEl) finalEl.innerText = USER_BLESS;
+            // 确保背景音乐播放
+            playEndBGM();
+        }).catch(() => {
+            // 降级显示
+            stopCallTimer();
+            showPage('p6');
+            document.getElementById('finalBless').innerText = USER_BLESS;
+            playEndBGM();
+        });
+    }
+    
+    // 主要接听流程：优雅加载图片、音频解锁、切换页面
+    async function onAcceptCall() {
+        // 1. 解锁音频环境 (首次交互必须)
+        unlockAudioContext();
+        // 2. 播放来电铃声 (短暂响一下后停止)
+        startRing();
+        // 3. 延迟300ms后正式进入通话 (模拟接听效果)
+        setTimeout(() => {
+            stopRing();   // 停止来电铃声
+            showPage('p2');
+            startCallTimerUI();
+            // 加载通话页所需背景图 (不影响性能)
+            loadCallBackground();
+            // 预加载蛋糕图片，以备后续蛋糕页快速显示
+            preloadCakeImage();
+            setCardBackground();   // 预载结尾背景
+            
+            // 4. 播放通话后音频序列: 01-open -> 02-cake -> 03-blessing -> 进入蛋糕页
+            playSequence(['01-open', '02-cake', '03-blessing'], () => {
+                // 引导进入蛋糕吹蜡烛页
+                showPage('p3');
+                // 播放蜡烛音效
+                playAudioFile('04-candle').catch(e=>console.warn);
+            }).catch(err => {
+                // 如果音频失败依然进入蛋糕页保证流程
+                showPage('p3');
+            });
+        }, 280);
+    }
+    
+    // 拒绝按钮添加小提示但不会阻断
+    function onRefuse() {
+        alert("📞 不接小新会伤心的哦！再试试接听吧～");
+    }
+    
+    // 全局懒加载其余大图 (背景和图片完全不影响首屏)
+    function idleLoadRemainingAssets() {
+        // 提前把call背景、蛋糕、卡片背景在空闲时加载缓存，用户点击时立刻展示
+        const linkPreload = (url) => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'image';
+            link.href = url;
+            document.head.appendChild(link);
+        };
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => {
+                linkPreload(lazyImages.callBg);
+                linkPreload(lazyImages.cakeImg);
+                linkPreload(lazyImages.cardBg);
+                // 同时预加载音频文件
+                preloadAllAudios();
+                initRingSound();
+            }, { timeout: 1500 });
+        } else {
+            setTimeout(() => {
+                preloadAllAudios();
+                initRingSound();
+                new Image().src = lazyImages.callBg;
+                new Image().src = lazyImages.cakeImg;
+                new Image().src = lazyImages.cardBg;
+            }, 200);
+        }
+    }
+    
+    // 绑定长按吹蜡烛事件 (移动端PC兼容)
+    function bindBlowEvents() {
+        const blowBtn = document.getElementById('blowBtn');
+        if (!blowBtn) return;
+        const start = (e) => {
+            e.preventDefault();
+            startBlow();
+        };
+        const end = (e) => {
+            e.preventDefault();
+            stopBlow();
+        };
+        blowBtn.addEventListener('mousedown', start);
+        blowBtn.addEventListener('mouseup', end);
+        blowBtn.addEventListener('mouseleave', end);
+        blowBtn.addEventListener('touchstart', start, { passive: false });
+        blowBtn.addEventListener('touchend', end);
+        blowBtn.addEventListener('touchcancel', end);
+    }
+    
+    // ----------------------------- 启动优化 & 事件绑定 -----------------------------
+    window.onload = () => {
+        // 先静默加载非关键资源，确保首屏只需要渲染p1
+        idleLoadRemainingAssets();
+        bindBlowEvents();
+        
+        // 绑定接听/拒绝
+        const acceptBtn = document.getElementById('accept');
+        const refuseBtn = document.getElementById('refuse');
+        if (acceptBtn) acceptBtn.addEventListener('click', onAcceptCall);
+        if (refuseBtn) refuseBtn.addEventListener('click', onRefuse);
+        
+        // 为了极速展示，提前确保头像已经高优加载，无需额外操作。
+        // 通话页等其他背景图片完全在空闲及用户交互后再设置，首屏0额外请求
+        // 另外如果在慢网络下，确保来电页不卡顿
+        console.log('页面已优化: 图片懒加载 + 音频预解锁模式');
+    };
+    
+    // 确保所有页面切换时清理内存
+    window.addEventListener('beforeunload', () => {
+        if (ringAudio) ringAudio.pause();
+        if (bgmAudio) bgmAudio.pause();
+        if (currentAudio) currentAudio.pause();
+        if (callTimer) clearInterval(callTimer);
+    });
 </script>
 </body>
 </html>
