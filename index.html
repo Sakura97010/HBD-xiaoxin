@@ -2,10 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
     <title>野原新之助来电</title>
-    <!-- 关键：仅预加载首屏必需的头像图片，其余图片延迟加载，大幅提升首屏速度 -->
-    <link rel="preload" as="image" href="./xiaoxin-avatar.jpg" fetchpriority="high">
     <style>
         * {
             margin: 0;
@@ -14,10 +12,9 @@
             -webkit-tap-highlight-color: transparent;
         }
         body {
-            color: #fff;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0F172A;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
             overflow: hidden;
-            background: #0F172A; /* fallback */
         }
         .page {
             width: 100%;
@@ -30,43 +27,37 @@
             top: 0;
             left: 0;
             padding: 20px;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.2s;
         }
         .hide {
             display: none !important;
         }
-
-        /* 来电页：纯色渐变，无背景图请求 */
+        /* 来电页纯色渐变 */
         #p1 {
             background: linear-gradient(180deg, #0F172A, #1E293B, #2E1065);
         }
-        /* 通话页、烟花页、结尾页背景图改为动态加载，避免首屏竞争 */
+        /* 通话页、烟花页、结尾页默认无背景图，进入页面再动态加载 */
         #p2, #p4, #p6 {
-            background-size: cover !important;
-            background-position: center !important;
-            background-repeat: no-repeat !important;
+            background-color: #1e1a2f;
         }
-        /* 蛋糕页纯色背景（后续无背景图） */
+        /* 蛋糕页背景 */
         #p3 {
             background: linear-gradient(180deg, #0F172A, #1E293B, #2E1065);
         }
-
-        /* 头像及脉冲动画 - 优化渲染层 */
+        /* 头像区域 */
         .avatar-box {
             position: relative;
-            width: 190px;
-            height: 190px;
-            margin-bottom: 35px;
-            z-index: 1;
-            will-change: transform;
+            width: 170px;
+            height: 170px;
+            margin-bottom: 30px;
         }
         .avatar {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: #FFD100 url('./xiaoxin-avatar.jpg') center / cover no-repeat;
-            box-shadow: 0 0 25px rgba(255, 209, 0, 0.4);
-            backface-visibility: hidden;
+            /* 头像 Base64 (压缩后约4KB) 确保首屏无网络请求 */
+            background: #FFD100 url("data:image/jpeg;base64,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") center/cover no-repeat;
+            box-shadow: 0 0 20px rgba(255,209,0,0.5);
         }
         .wave {
             position: absolute;
@@ -75,28 +66,22 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            border: 2px solid rgba(255, 209, 0, 0.5);
+            border: 2px solid rgba(255,209,0,0.6);
             animation: waveAnim 2s infinite;
+            pointer-events: none;
         }
         .wave:nth-child(3) {
             animation-delay: 0.7s;
         }
         @keyframes waveAnim {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(1.4);
-                opacity: 0;
-            }
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
         }
-
         .call-title {
             font-size: 28px;
             color: #FFD100;
-            margin-bottom: 8px;
             font-weight: 600;
+            margin-bottom: 6px;
         }
         .call-sub {
             font-size: 15px;
@@ -116,51 +101,39 @@
             font-size: 15px;
             font-weight: 500;
             cursor: pointer;
-            transition: transform 0.1s ease;
+            transition: transform 0.1s;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .btn:active {
-            transform: scale(0.96);
-        }
-        .btn-accept {
-            background: linear-gradient(135deg, #10B981, #059669);
-        }
-        .btn-refuse {
-            background: linear-gradient(135deg, #EF4444, #DC2626);
-        }
-
-        /* 通话页居中文字 */
+        .btn:active { transform: scale(0.96); }
+        .btn-accept { background: linear-gradient(135deg, #10B981, #059669); }
+        .btn-refuse { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        
+        /* 通话页文字 */
         .talk-time {
-            font-size: 26px;
+            font-size: 28px;
             font-weight: 500;
             color: #FFD100;
-            margin: 10px 0;
-            letter-spacing: 1px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            margin-bottom: 12px;
+            text-shadow: 0 1px 3px black;
         }
         .talk-text {
             font-size: 18px;
-            max-width: 300px;
-            line-height: 1.5;
-            text-align: center;
-            background: rgba(0,0,0,0.4);
-            padding: 8px 16px;
-            border-radius: 40px;
-            backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            padding: 8px 20px;
+            border-radius: 60px;
         }
-
-        /* 蛋糕吹蜡烛区域 */
+        
+        /* 蛋糕吹蜡烛 */
         .cake-pic {
             width: 220px;
-            height: auto;
-            margin: 0 auto 25px;
-            border-radius: 20px;
+            margin-bottom: 20px;
+            border-radius: 24px;
             overflow: hidden;
             box-shadow: 0 12px 25px rgba(0,0,0,0.3);
         }
         .cake-pic img {
             width: 100%;
-            height: auto;
             display: block;
         }
         .flame {
@@ -168,41 +141,27 @@
             height: 32px;
             background: radial-gradient(circle, #FFEF00, #FF9A00);
             border-radius: 50% 50% 20% 20%;
-            position: relative;
-            top: -16px;
-            margin: 0 auto;
-            animation: flicker 0.7s infinite alternate;
-            box-shadow: 0 0 8px rgba(255,160,0,0.8);
+            margin: -10px auto 5px;
+            animation: flicker 0.6s infinite alternate;
         }
         @keyframes flicker {
-            0% {
-                transform: scale(1);
-                opacity: 0.9;
-            }
-            100% {
-                transform: scale(1.1);
-                opacity: 1;
-            }
+            0% { transform: scale(1); opacity: 0.9; }
+            100% { transform: scale(1.1); opacity: 1; }
         }
-        .flame.out {
-            opacity: 0;
-            height: 0;
-            animation: none;
-        }
+        .flame.out { opacity: 0; height: 0; animation: none; }
         .progress {
             width: 160px;
             height: 6px;
             background: #334155;
             border-radius: 10px;
             margin: 12px auto;
-            overflow: hidden;
         }
         .progress-bar {
-            height: 100%;
             width: 0%;
+            height: 100%;
             background: #FFD100;
-            transition: width 0.05s linear;
             border-radius: 10px;
+            transition: width 0.05s linear;
         }
         .btn-blow {
             width: 100px;
@@ -210,22 +169,20 @@
             border-radius: 50%;
             background: linear-gradient(135deg, #FFD100, #FFB400);
             border: none;
-            font-size: 17px;
             font-weight: bold;
+            font-size: 17px;
             color: #2D1B00;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.3);
-            transition: all 0.05s linear;
             cursor: pointer;
+            box-shadow: 0 6px 14px black;
+            transition: 0.05s linear;
             touch-action: manipulation;
         }
-        .btn-blow:active {
-            transform: scale(0.96);
-        }
-
-        /* 流星效果 */
+        .btn-blow:active { transform: scale(0.96); }
+        
+        /* 流星 */
         .meteor {
             position: absolute;
-            width: 150px;
+            width: 130px;
             height: 2px;
             background: linear-gradient(90deg, transparent, #FFD100, #fff);
             transform: rotate(-45deg);
@@ -235,53 +192,32 @@
             pointer-events: none;
         }
         .meteor.fly {
-            animation: meteorFly 1.8s forwards;
+            animation: meteorFly 1.6s forwards;
         }
         @keyframes meteorFly {
-            0% {
-                left: -150px;
-                opacity: 1;
-            }
-            100% {
-                left: 100%;
-                opacity: 0;
-            }
+            0% { left: -150px; opacity: 1; }
+            100% { left: 100%; opacity: 0; }
         }
-
-        /* 最终祝福词 : 无背景框，橙色醒目 */
+        
+        /* 祝福文字 */
         .blessing-text {
             position: absolute;
             top: 28%;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 28px;
+            width: 86%;
+            font-size: 26px;
             font-weight: 600;
             color: #FF9F2E;
             text-align: center;
-            background: none !important;
-            padding: 0;
-            width: 86%;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            letter-spacing: 1px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            background: none;
             line-height: 1.4;
-        }
-
-        /* 优化加载中的无闪烁 */
-        .page {
-            background-color: #0F172A;
-        }
-        /* 保证通话页背景图加载后平滑 */
-        #p2, #p4, #p6 {
-            transition: background 0.2s;
-        }
-        /* 隐藏滚动条 */
-        ::-webkit-scrollbar {
-            display: none;
         }
     </style>
 </head>
 <body>
-    <!-- 来电页面 -->
+    <!-- 来电页 -->
     <div class="page" id="p1">
         <div class="avatar-box">
             <div class="avatar"></div>
@@ -289,459 +225,221 @@
             <div class="wave"></div>
         </div>
         <div class="call-title">野原新之助</div>
-        <div class="call-sub">生日来电中...</div>
+        <div class="call-sub">🎂 生日来电中 🎂</div>
         <div class="btn-group">
             <button class="btn btn-refuse" id="refuse">拒绝</button>
             <button class="btn btn-accept" id="accept">接听</button>
         </div>
     </div>
 
-    <!-- 通话页面 (无头像，完全文字) -->
+    <!-- 通话页 -->
     <div class="page hide" id="p2">
         <div class="talk-time" id="ttime">00:00</div>
-        <div class="talk-text">✨ 小新送祝福中 ✨</div>
+        <div class="talk-text">✨ 小新正在送祝福 ✨</div>
     </div>
 
-    <!-- 吹蜡烛页面 -->
+    <!-- 吹蜡烛页 -->
     <div class="page hide" id="p3">
-        <div class="cake-pic" id="cakeContainer">
-            <!-- 蛋糕图片延迟加载，初始无src -->
-            <img id="cakeImg" alt="生日蛋糕" style="width:100%; border-radius:16px;">
-        </div>
+        <div class="cake-pic"><img id="cakeImg" alt="生日蛋糕"></div>
         <div class="flame" id="fire"></div>
         <div style="text-align:center">
-            <div style="color:#FFD100; font-size:20px; margin-bottom:8px; font-weight:500;">🎂 长按3秒吹灭蜡烛 🎂</div>
+            <div style="color:#FFD100; margin-bottom:8px;">🎂 长按3秒吹灭蜡烛 🎂</div>
             <div class="progress"><div class="progress-bar" id="bar"></div></div>
             <button class="btn-blow" id="blowBtn">💨 长按吹灭</button>
         </div>
     </div>
 
-    <!-- 烟花页面（背景动态加载） -->
-    <div class="page fireworks-page hide" id="p4">
+    <!-- 烟花页 -->
+    <div class="page hide" id="p4">
         <div class="meteor" id="meteor"></div>
     </div>
 
-    <!-- 结尾祝福页面 -->
-    <div class="page card-page hide" id="p6">
+    <!-- 结尾祝福页 -->
+    <div class="page hide" id="p6">
         <div class="blessing-text" id="finalBless"></div>
     </div>
 
 <script>
-    // ----------------------------- 性能优化核心: 懒加载图片 + 音频预解锁 -----------------------------
+    // ---------- 性能极致优化版本 ----------
+    // 所有音频和背景图片均在接听后动态加载，首屏只包含base64头像 (仅5KB)
     const USER_BLESS = "✨ "愿你做自由的自己，年年有今日，岁岁有今朝！" ✨";
     
-    // 音频全局控制
-    let ringAudio = null;          // 来电铃声
-    let bgmAudio = null;           // 结尾背景音乐
-    let currentAudio = null;       // 当前播放的音频（顺序播放）
-    let audioUnlocked = false;     // 是否已通过用户手势解锁音频
-    let blowTimer = null;
-    let blowProgress = 0;
-    const BLOW_TIME = 3000;
-    let callTimer = null;
-    let sec = 0;
-    let isBlowing = false;
-    
-    // 图片延迟加载映射 (避免首屏请求)
-    const lazyImages = {
-        callBg: './call-bg.jpg',
-        cakeImg: './cake-img.jpg',
-        cardBg: './card-bg.jpg'
-    };
-    
-    // ----------------------------- 辅助函数：优雅加载背景/图片 -----------------------------
-    function setBackgroundLater(elementId, imgUrl) {
-        if (!imgUrl) return;
-        const el = document.getElementById(elementId);
-        if (el) {
-            // 使用 requestIdleCallback 或 setTimeout 低优先级加载背景图，不影响首屏渲染
-            const loadBg = () => {
-                const img = new Image();
-                img.onload = () => {
-                    el.style.backgroundImage = `url('${imgUrl}')`;
-                    el.style.backgroundSize = 'cover';
-                    el.style.backgroundPosition = 'center';
-                };
-                img.onerror = () => console.warn(`背景图加载失败: ${imgUrl}`);
-                img.src = imgUrl;
-            };
-            if ('requestIdleCallback' in window) {
-                requestIdleCallback(loadBg, { timeout: 2000 });
-            } else {
-                setTimeout(loadBg, 100);
-            }
+    let ringAudio = null, bgmAudio = null;
+    let blowTimer = null, blowProgress = 0, isBlowing = false;
+    let callTimer = null, sec = 0;
+    let audioUnlocked = false;   // 音频解锁标志
+
+    // 懒加载资源 (仅在需要时加载)
+    function loadImageLater(imgId, srcUrl) {
+        const imgEl = document.getElementById(imgId);
+        if (imgEl && !imgEl.src) {
+            const tempImg = new Image();
+            tempImg.onload = () => { imgEl.src = srcUrl; };
+            tempImg.src = srcUrl;
         }
     }
     
-    // 预加载蛋糕图片（在用户接听后执行，不会阻塞来电页面）
-    function preloadCakeImage() {
-        const cakeImgEl = document.getElementById('cakeImg');
-        if (cakeImgEl && !cakeImgEl.src) {
+    function setBgOnPage(pageId, bgUrl) {
+        const page = document.getElementById(pageId);
+        if (page && !page.style.backgroundImage) {
             const img = new Image();
-            img.onload = () => {
-                cakeImgEl.src = lazyImages.cakeImg;
-            };
-            img.onerror = () => {
-                cakeImgEl.alt = '🎂 生日蛋糕 🎂';
-                cakeImgEl.style.padding = '20px';
-                cakeImgEl.style.background = '#FFE4B5';
-            };
-            img.src = lazyImages.cakeImg;
+            img.onload = () => { page.style.backgroundImage = `url('${bgUrl}')`; };
+            img.src = bgUrl;
         }
     }
-    
-    // 设置结尾页面背景 (p6) 以及额外效果
-    function setCardBackground() {
-        const p6 = document.getElementById('p6');
-        if (p6 && lazyImages.cardBg) {
-            const img = new Image();
-            img.onload = () => {
-                p6.style.backgroundImage = `url('${lazyImages.cardBg}')`;
-                p6.style.backgroundSize = 'cover';
-                p6.style.backgroundPosition = 'center';
-            };
-            img.src = lazyImages.cardBg;
-        }
-    }
-    
-    // 为通话页和烟花页加载背景（call-bg.jpg）在接听时激活
-    function loadCallBackground() {
-        const pagesNeedBg = ['p2', 'p4'];
-        pagesNeedBg.forEach(id => {
-            const page = document.getElementById(id);
-            if (page && !page.style.backgroundImage) {
-                const img = new Image();
-                img.onload = () => {
-                    page.style.backgroundImage = `url('${lazyImages.callBg}')`;
-                    page.style.backgroundSize = 'cover';
-                    page.style.backgroundPosition = 'center';
-                };
-                img.src = lazyImages.callBg;
-            }
-        });
-    }
-    
-    // ----------------------------- 音频解锁 + 预加载所有音频（不自动播放，仅加载缓存）-----------------------------
-    // 音频文件列表 (按顺序)
-    const audioFiles = [
-        'ring', 'bgm', 
-        '01-open', '02-cake', '03-blessing', '04-candle',
-        '05-success', '06-gift', '07-end'
-    ];
-    const audioCache = {};
-    
-    // 预加载所有音频 (不播放，只为了提前缓存，接听后立即播放无延迟)
-    function preloadAllAudios() {
-        for (let file of audioFiles) {
-            try {
-                const audio = new Audio(`./${file}.mp3`);
-                audio.preload = 'auto';
-                audio.load();
-                audioCache[file] = audio;
-            } catch(e) { console.warn(`预加载音频 ${file} 失败`, e); }
-        }
-    }
-    
-    // 在用户首次交互时解锁音频环境 (重要: 解决移动端自动播放策略)
-    function unlockAudioContext() {
-        if (audioUnlocked) return true;
-        // 创建静默音频播放并立即暂停，以此完成手势授权
-        const silentAudio = new Audio();
-        silentAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtU291bmRibGFzdCBEZWNvZGVyIC0gU0lMRU5UIExBQkVMRVNTIEJBQ0tHUk9VTkQuLi4=';
-        silentAudio.volume = 0;
-        silentAudio.play().then(() => {
-            silentAudio.pause();
-            audioUnlocked = true;
-            console.log('音频环境已解锁');
-        }).catch(err => {
-            // 某些浏览器仍可能报错，但不影响后续
-            audioUnlocked = true;
-            console.log('解锁尝试完成');
-        });
-        return audioUnlocked;
-    }
-    
-    // 优化播放: 直接使用缓存的audio或新建，确保已经预加载
-    function playAudioFile(fileName, onEndCallback) {
+
+    // 音频播放辅助 (每次播放新建，避免缓存阻塞)
+    function playSound(file, loop = false) {
+        if (!audioUnlocked) return Promise.reject("audio locked");
         return new Promise((resolve) => {
-            let audio = audioCache[fileName];
-            if (!audio || audio.ended || audio.paused) {
-                audio = new Audio(`./${fileName}.mp3`);
-                audioCache[fileName] = audio;
-            }
-            // 停止之前可能还在播放的相同音频
-            audio.pause();
-            audio.currentTime = 0;
-            audio.volume = 0.8;
-            audio.onended = () => {
-                if (onEndCallback) onEndCallback();
-                resolve();
-            };
-            audio.play().catch(err => {
-                console.warn(`播放音频 ${fileName}.mp3 失败:`, err);
-                if (onEndCallback) onEndCallback();
-                resolve();
-            });
+            const audio = new Audio(`./${file}.mp3`);
+            if (loop) audio.loop = true;
+            audio.volume = 0.6;
+            audio.onended = () => resolve();
+            audio.onerror = () => resolve();
+            audio.play().catch(() => resolve());
         });
     }
-    
-    // 顺序播放音频序列 (保证流程不中断)
-    async function playSequence(audioNames, onComplete) {
-        for (let name of audioNames) {
-            await playAudioFile(name);
-        }
-        if (onComplete) onComplete();
-    }
-    
-    // 初始化来电铃声 (循环且只缓存)
-    function initRingSound() {
-        if (!audioCache['ring']) {
-            ringAudio = new Audio('./ring.mp3');
-            ringAudio.loop = true;
-            ringAudio.volume = 0.5;
-            audioCache['ring'] = ringAudio;
-        } else {
-            ringAudio = audioCache['ring'];
-            ringAudio.loop = true;
+
+    // 顺序播放列表 (简化版)
+    async function playSequence(files) {
+        for (let f of files) {
+            await playSound(f);
         }
     }
-    
-    // 播放来电铃声 (循环)
-    function startRing() {
-        if (ringAudio) {
-            ringAudio.currentTime = 0;
-            ringAudio.play().catch(e => console.warn('播放来电铃声失败', e));
-        }
+
+    // 接听按钮逻辑
+    async function onAccept() {
+        // 1. 解锁音频 (通过播放并立即暂停空音频)
+        const unlockAudio = async () => {
+            const silent = new Audio();
+            silent.src = "data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtU291bmRibGFzdCBEZWNvZGVyIC0gU0lMRU5UIExBQkVMRVNTIEJBQ0tHUk9VTkQuLi4=";
+            silent.volume = 0;
+            await silent.play().catch(()=>{});
+            silent.pause();
+            audioUnlocked = true;
+        };
+        await unlockAudio();
+        
+        // 2. 播放铃声并短暂延迟后停止，模拟接听
+        ringAudio = new Audio('./ring.mp3');
+        ringAudio.loop = true;
+        ringAudio.play().catch(()=>{});
+        setTimeout(() => {
+            if (ringAudio) { ringAudio.pause(); ringAudio = null; }
+            // 切换到通话页
+            showPage('p2');
+            startTimer();
+            // 动态加载通话背景图 (call-bg.jpg)
+            setBgOnPage('p2', './call-bg.jpg');
+            // 预加载蛋糕图片 (在蛋糕页需要)
+            loadImageLater('cakeImg', './cake-img.jpg');
+            setBgOnPage('p4', './call-bg.jpg');   // 烟花页也使用相同背景
+            setBgOnPage('p6', './card-bg.jpg');
+            
+            // 播放通话后音频序列
+            playSequence(['01-open', '02-cake', '03-blessing']).then(() => {
+                showPage('p3');
+                playSound('04-candle');
+            }).catch(() => {
+                showPage('p3');
+            });
+        }, 350);
     }
-    
-    function stopRing() {
-        if (ringAudio) {
-            ringAudio.pause();
-            ringAudio.currentTime = 0;
-        }
-    }
-    
-    // 结尾BGM播放 (已经解锁过，一定能播放)
-    function playEndBGM() {
-        if (bgmAudio && !bgmAudio.paused) return;
-        if (audioCache['bgm']) {
-            bgmAudio = audioCache['bgm'];
-            bgmAudio.loop = true;
-            bgmAudio.volume = 0.4;
-            bgmAudio.play().catch(e => console.warn('bgm播放失败', e));
-        } else {
-            bgmAudio = new Audio('./bgm.mp3');
-            bgmAudio.loop = true;
-            bgmAudio.volume = 0.4;
-            bgmAudio.play().catch(() => {});
-            audioCache['bgm'] = bgmAudio;
-        }
-    }
-    
-    // 停止当前通话计时
-    function stopCallTimer() {
-        if (callTimer) {
-            clearInterval(callTimer);
-            callTimer = null;
-        }
-    }
-    
-    function startCallTimerUI() {
+
+    function startTimer() {
+        if (callTimer) clearInterval(callTimer);
         sec = 0;
         const ttime = document.getElementById('ttime');
-        if (callTimer) clearInterval(callTimer);
         callTimer = setInterval(() => {
             sec++;
-            let m = String(Math.floor(sec / 60)).padStart(2, '0');
-            let s = String(sec % 60).padStart(2, '0');
+            let m = String(Math.floor(sec/60)).padStart(2,'0');
+            let s = String(sec%60).padStart(2,'0');
             if (ttime) ttime.innerText = `${m}:${s}`;
         }, 1000);
     }
-    
-    // 页面切换
-    function showPage(pageId) {
+
+    function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.add('hide'));
-        const target = document.getElementById(pageId);
-        if (target) target.classList.remove('hide');
-        // 当显示结尾页时自动播放BGM
-        if (pageId === 'p6') {
-            playEndBGM();
+        document.getElementById(id).classList.remove('hide');
+        if (id === 'p6') {
+            // 结尾播放BGM
+            if (!bgmAudio) {
+                bgmAudio = new Audio('./bgm.mp3');
+                bgmAudio.loop = true;
+                bgmAudio.volume = 0.4;
+                bgmAudio.play().catch(()=>{});
+            } else {
+                bgmAudio.play().catch(()=>{});
+            }
         }
     }
-    
-    // 烟花特效
-    function createFireworks() {
-        const meteor = document.getElementById('meteor');
-        if (meteor) {
-            meteor.classList.remove('fly');
-            void meteor.offsetWidth; // 强制重绘
-            meteor.classList.add('fly');
-        }
-    }
-    
+
     // 吹蜡烛逻辑
     function startBlow() {
         if (isBlowing) return;
         isBlowing = true;
         blowProgress = 0;
         const bar = document.getElementById('bar');
-        if (bar) bar.style.width = '0%';
         if (blowTimer) clearInterval(blowTimer);
         blowTimer = setInterval(() => {
             blowProgress += 100;
-            let percentage = Math.min(100, (blowProgress / BLOW_TIME) * 100);
-            if (bar) bar.style.width = percentage + '%';
-            if (blowProgress >= BLOW_TIME) {
-                completeBlow();
+            let percent = Math.min(100, (blowProgress / 3000) * 100);
+            if (bar) bar.style.width = percent + '%';
+            if (blowProgress >= 3000) {
+                clearInterval(blowTimer);
+                if (document.getElementById('fire')) document.getElementById('fire').classList.add('out');
+                showPage('p4');
+                const meteor = document.getElementById('meteor');
+                if (meteor) {
+                    meteor.classList.remove('fly');
+                    void meteor.offsetWidth;
+                    meteor.classList.add('fly');
+                }
+                playSequence(['05-success', '06-gift', '07-end']).then(() => {
+                    showPage('p6');
+                    document.getElementById('finalBless').innerText = USER_BLESS;
+                    if (!bgmAudio) {
+                        bgmAudio = new Audio('./bgm.mp3');
+                        bgmAudio.loop = true;
+                        bgmAudio.play().catch(()=>{});
+                    }
+                }).catch(() => {
+                    showPage('p6');
+                    document.getElementById('finalBless').innerText = USER_BLESS;
+                });
+                isBlowing = false;
             }
         }, 100);
     }
-    
+
     function stopBlow() {
-        if (isBlowing && blowProgress < BLOW_TIME) {
+        if (isBlowing && blowProgress < 3000) {
             clearInterval(blowTimer);
-            const bar = document.getElementById('bar');
-            if (bar) bar.style.width = '0%';
+            document.getElementById('bar').style.width = '0%';
             isBlowing = false;
         }
     }
+
+    // 拒绝提示
+    document.getElementById('refuse').onclick = () => alert('📞 不接小新会伤心的哦～请接听吧！');
+
+    // 绑定吹蜡烛事件
+    const blowBtn = document.getElementById('blowBtn');
+    blowBtn.addEventListener('mousedown', startBlow);
+    blowBtn.addEventListener('mouseup', stopBlow);
+    blowBtn.addEventListener('mouseleave', stopBlow);
+    blowBtn.addEventListener('touchstart', startBlow, { passive: false });
+    blowBtn.addEventListener('touchend', stopBlow);
+    blowBtn.addEventListener('touchcancel', stopBlow);
+
+    document.getElementById('accept').addEventListener('click', onAccept);
     
-    function completeBlow() {
-        clearInterval(blowTimer);
-        isBlowing = false;
-        const flame = document.getElementById('fire');
-        if (flame) flame.classList.add('out');
-        // 显示烟花页面 (此时背景已存在 call-bg)
-        showPage('p4');
-        createFireworks();
-        // 顺序播放后续音效
-        playSequence(['05-success', '06-gift', '07-end'], async () => {
-            // 播放完成后展示祝福页面
-            stopCallTimer();
-            showPage('p6');
-            const finalEl = document.getElementById('finalBless');
-            if (finalEl) finalEl.innerText = USER_BLESS;
-            // 确保背景音乐播放
-            playEndBGM();
-        }).catch(() => {
-            // 降级显示
-            stopCallTimer();
-            showPage('p6');
-            document.getElementById('finalBless').innerText = USER_BLESS;
-            playEndBGM();
-        });
-    }
-    
-    // 主要接听流程：优雅加载图片、音频解锁、切换页面
-    async function onAcceptCall() {
-        // 1. 解锁音频环境 (首次交互必须)
-        unlockAudioContext();
-        // 2. 播放来电铃声 (短暂响一下后停止)
-        startRing();
-        // 3. 延迟300ms后正式进入通话 (模拟接听效果)
-        setTimeout(() => {
-            stopRing();   // 停止来电铃声
-            showPage('p2');
-            startCallTimerUI();
-            // 加载通话页所需背景图 (不影响性能)
-            loadCallBackground();
-            // 预加载蛋糕图片，以备后续蛋糕页快速显示
-            preloadCakeImage();
-            setCardBackground();   // 预载结尾背景
-            
-            // 4. 播放通话后音频序列: 01-open -> 02-cake -> 03-blessing -> 进入蛋糕页
-            playSequence(['01-open', '02-cake', '03-blessing'], () => {
-                // 引导进入蛋糕吹蜡烛页
-                showPage('p3');
-                // 播放蜡烛音效
-                playAudioFile('04-candle').catch(e=>console.warn);
-            }).catch(err => {
-                // 如果音频失败依然进入蛋糕页保证流程
-                showPage('p3');
-            });
-        }, 280);
-    }
-    
-    // 拒绝按钮添加小提示但不会阻断
-    function onRefuse() {
-        alert("📞 不接小新会伤心的哦！再试试接听吧～");
-    }
-    
-    // 全局懒加载其余大图 (背景和图片完全不影响首屏)
-    function idleLoadRemainingAssets() {
-        // 提前把call背景、蛋糕、卡片背景在空闲时加载缓存，用户点击时立刻展示
-        const linkPreload = (url) => {
-            const link = document.createElement('link');
-            link.rel = 'preload';
-            link.as = 'image';
-            link.href = url;
-            document.head.appendChild(link);
-        };
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(() => {
-                linkPreload(lazyImages.callBg);
-                linkPreload(lazyImages.cakeImg);
-                linkPreload(lazyImages.cardBg);
-                // 同时预加载音频文件
-                preloadAllAudios();
-                initRingSound();
-            }, { timeout: 1500 });
-        } else {
-            setTimeout(() => {
-                preloadAllAudios();
-                initRingSound();
-                new Image().src = lazyImages.callBg;
-                new Image().src = lazyImages.cakeImg;
-                new Image().src = lazyImages.cardBg;
-            }, 200);
-        }
-    }
-    
-    // 绑定长按吹蜡烛事件 (移动端PC兼容)
-    function bindBlowEvents() {
-        const blowBtn = document.getElementById('blowBtn');
-        if (!blowBtn) return;
-        const start = (e) => {
-            e.preventDefault();
-            startBlow();
-        };
-        const end = (e) => {
-            e.preventDefault();
-            stopBlow();
-        };
-        blowBtn.addEventListener('mousedown', start);
-        blowBtn.addEventListener('mouseup', end);
-        blowBtn.addEventListener('mouseleave', end);
-        blowBtn.addEventListener('touchstart', start, { passive: false });
-        blowBtn.addEventListener('touchend', end);
-        blowBtn.addEventListener('touchcancel', end);
-    }
-    
-    // ----------------------------- 启动优化 & 事件绑定 -----------------------------
+    // 首屏后空闲时预先加载背景图（但不影响首屏渲染）
     window.onload = () => {
-        // 先静默加载非关键资源，确保首屏只需要渲染p1
-        idleLoadRemainingAssets();
-        bindBlowEvents();
-        
-        // 绑定接听/拒绝
-        const acceptBtn = document.getElementById('accept');
-        const refuseBtn = document.getElementById('refuse');
-        if (acceptBtn) acceptBtn.addEventListener('click', onAcceptCall);
-        if (refuseBtn) refuseBtn.addEventListener('click', onRefuse);
-        
-        // 为了极速展示，提前确保头像已经高优加载，无需额外操作。
-        // 通话页等其他背景图片完全在空闲及用户交互后再设置，首屏0额外请求
-        // 另外如果在慢网络下，确保来电页不卡顿
-        console.log('页面已优化: 图片懒加载 + 音频预解锁模式');
+        // 什么都不做，让首屏立即展示。背景图和音频等用户交互后再加载
+        console.log("首屏已加载，头像内联无网络请求，极速显示");
     };
-    
-    // 确保所有页面切换时清理内存
-    window.addEventListener('beforeunload', () => {
-        if (ringAudio) ringAudio.pause();
-        if (bgmAudio) bgmAudio.pause();
-        if (currentAudio) currentAudio.pause();
-        if (callTimer) clearInterval(callTimer);
-    });
 </script>
 </body>
 </html>
